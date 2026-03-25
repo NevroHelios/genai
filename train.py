@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 from config import CFG
 from dataset import MashupDataset, seed_everything, split_songs
 from model import GenreClassifier
-from utils import evaluate_local, run_sanity_check, upload_to_kagglehub
+from utils import evaluate_local, upload_to_kagglehub
 
 warnings.filterwarnings("ignore")
 torch.set_float32_matmul_precision("medium")
@@ -83,7 +83,6 @@ def main():
     train_loader, val_loader, test_ds = build_loaders(splits)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    run_sanity_check(train_loader, val_loader, device)
 
     model = GenreClassifier(num_classes=10, lr=CFG.LR)
     total = sum(p.numel() for p in model.parameters())

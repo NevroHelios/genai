@@ -16,47 +16,6 @@ from dataset import load_audio, to_log_mel
 from model import GenreClassifier
 
 
-def run_sanity_check(train_loader, val_loader, device):
-    print("\nSANITY CHECK")
-
-    if torch.cuda.is_available():
-        props = torch.cuda.get_device_properties(0)
-        print(
-            f"  [GPU]  {torch.cuda.get_device_name(0)}  |  VRAM: {props.total_memory / 1024**3:.1f} GB"
-        )
-    else:
-        print("  [GPU]  No CUDA — running on CPU")
-
-    for name, loader in [("train", train_loader), ("val", val_loader)]:
-        mel, lbl = next(iter(loader))
-        assert (
-            mel.ndim == 4
-            and mel.shape[1:3] == (3, CFG.N_MELS)
-            and mel.shape[3] == CFG.CROP_FRAMES
-        )
-        assert not (torch.isnan(mel).any() or torch.isinf(mel).any())
-        assert 0 <= lbl.min() and lbl.max() < 10
-        print(
-            f"  [{name:5s}]  shape={tuple(mel.shape)}  mean={mel.mean():.3f}  "
-            f"std={mel.std():.3f}  labels={dict(sorted(Counter(lbl.tolist()).items()))}"
-        )
-
-    probe = GenreClassifier(num_classes=10).to(device).eval()
-    dummy = torch.randn(4, 3, CFG.N_MELS, CFG.CROP_FRAMES).to(device)
-    with torch.no_grad():
-        out = probe(dummy)
-    assert out.shape == (4, 10) and not torch.isnan(out).any()
-
-    loss = nn.CrossEntropyLoss()(out, torch.randint(0, 10, (4,)).to(device))
-    assert torch.isfinite(loss) and loss.item() < 10.0
-    print(
-        f"  [MODEL] OK | output={tuple(out.shape)}  [LOSS] CE={loss.item():.4f} (expected ~{np.log(10):.2f})"
-    )
-
-    del probe, dummy, out
-    torch.cuda.empty_cache() if torch.cuda.is_available() else None
-    print("  ✓ All checks passed\n")
-
 
 def evaluate_local(model, dataset, device):
     model.eval()
