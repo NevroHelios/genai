@@ -13,7 +13,7 @@ from tqdm.auto import tqdm
 
 from config import CFG, IDX2GENRE
 from dataset import load_audio, to_log_mel
-from model import GenreClassifier
+from models.effnet import GenreClassifier
 
 
 

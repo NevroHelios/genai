@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 
 from config import CFG
 from dataset import MashupDataset, seed_everything, split_songs
-from model import GenreClassifier
+from models.effnet import GenreClassifier
 from utils import evaluate_local, upload_to_kagglehub
 
 warnings.filterwarnings("ignore")
