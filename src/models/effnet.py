@@ -6,7 +6,7 @@ import torchaudio
 from torchmetrics.classification import MulticlassF1Score
 from torchvision import models
 
-from config import CFG
+from src.config import CFG
 
 
 class GenreClassifier(pl.LightningModule):

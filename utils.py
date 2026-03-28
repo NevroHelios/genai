@@ -11,8 +11,8 @@ from torch.utils.data import DataLoader
 from torchmetrics.classification import MulticlassF1Score
 from tqdm.auto import tqdm
 
-from config import CFG, IDX2GENRE
-from dataset import load_audio, to_log_mel
+from src.config import CFG, IDX2GENRE
+from src.dataset import load_audio, to_log_mel
 from models.effnet import GenreClassifier
 
 

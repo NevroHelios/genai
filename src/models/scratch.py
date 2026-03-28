@@ -7,11 +7,11 @@ from torchmetrics.classification import MulticlassF1Score
 from torchvision import models
 from typing import Any
 
-from config import CFG
+from src.config import CFG
 
 
 
-class GenreClassifierConformer(pl.LightningModule):
+class GenreClassifierCNN(pl.LightningModule):
     def __init__(self, lr:float, label_smoothing:float=CFG.LABEL_SMOOTH,
                  num_classes:int = 10,
                  mixup_alpha=CFG.MIXUP_ALPHA,
@@ -30,18 +30,19 @@ class GenreClassifierConformer(pl.LightningModule):
 
         self.loss_fn = nn.CrossEntropyLoss(label_smoothing=label_smoothing)
 
-        self.backbone = torchaudio.models.Conformer(
-            input_dim=CFG.N_MELS,
-            num_heads=8,
-            ffn_dim=4 * CFG.N_MELS,
-            num_layers=8,
-            depthwise_conv_kernel_size=31
-        )
+        blocks = []
+        in_feat = 3
+        out_feat = 64
+        for _ in range(5):
+            blocks.extend(self.get_block(in_feat, out_feat))
+            in_feat = out_feat
+            out_feat *= 2
 
-        self.clf = nn.Sequential(
-            nn.Linear(in_features=CFG.N_MELS, out_features=256),
-            nn.SiLU(),
-            nn.Linear(in_features=256, out_features=10)
+        self.model = nn.Sequential(
+            *blocks,
+            nn.AdaptiveAvgPool2d(output_size=(1,1)),
+            nn.Flatten(),
+            nn.Linear(in_features=in_feat, out_features=self.num_classes)
         )
 
     def get_block(self, in_feat:int, out_feat:int):
@@ -54,14 +55,8 @@ class GenreClassifierConformer(pl.LightningModule):
 
     def forward(self, x):
         if self.training:
-            x = self.time_mask(self.freq_mask(x[:, 0, :, :])) #[b, c, f, t]
-        else:
-            x = x[:, 0, :, :]
-        x = x.permute(0, 2, 1) # [b, t, f]
-        lengths = torch.full((x.size(0),), x.size(1), device=x.device)
-        x, _ = self.backbone(x, lengths)
-        x = x.mean(dim=1)
-        return self.clf(x)
+            x = self.time_mask(self.freq_mask(x[:, 0:1, :, :])).expand_as(x)
+        return self.model(x)
 
     def _mixup(self, x, y):
         lam = float(np.random.beta(self.hparams.mixup_alpha, self.hparams.mixup_alpha))
@@ -70,7 +65,7 @@ class GenreClassifierConformer(pl.LightningModule):
         return lam * x + (1 - lam) * x[idx], y, y[idx], lam
 
     def training_step(self, batch, batch_idx):
-        x, y = batch # [b, c, f, t]
+        x, y = batch
         x, y_a, y_b, lam = self._mixup(x, y)
         logits = self(x)
         loss = lam * self.loss_fn(logits, y_a) + (1 - lam) * self.loss_fn(logits, y_b)
@@ -84,7 +79,6 @@ class GenreClassifierConformer(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        #x = torch.squeeze(x, dim=1).permute(0, 2, 1)
         logits = self(x)
         self.val_f1.update(logits.argmax(1), y)
         self.log("val_loss", self.loss_fn(logits, y), on_epoch=True, prog_bar=True)
@@ -94,20 +88,5 @@ class GenreClassifierConformer(pl.LightningModule):
         self.val_f1.reset()
 
     def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(params=self.parameters())
-        schedular = torch.optim.lr_scheduler.OneCycleLR(
-            optimizer=optimizer,
-            max_lr=self.lr,
-            total_steps=self.trainer.estimated_stepping_batches,
-            pct_start=0.1,
-            anneal_strategy="cos",
-            div_factor=10,
-            final_div_factor=100,
-        )
-        return {
-            "optimizer" : optimizer,
-            "lr_scheduler": {
-                "scheduler": schedular,
-                "interval": "step"
-            }
-        }
+        return torch.optim.Adam(self.parameters())
+

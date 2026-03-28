@@ -7,8 +7,8 @@ import wandb
 from pytorch_lightning.loggers import WandbLogger
 from torch.utils.data import DataLoader
 
-from config import CFG
-from dataset import MashupDataset, seed_everything, split_songs
+from src.config import CFG
+from src.dataset import MashupDataset, seed_everything, split_songs
 from models.effnet import GenreClassifier
 from utils import evaluate_local, upload_to_kagglehub
 

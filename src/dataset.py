@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-from config import CFG, GENRE_MAP
+from src.config import CFG, GENRE_MAP
 
 
 def seed_everything(seed=42):
