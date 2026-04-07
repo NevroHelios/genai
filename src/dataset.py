@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-from src.config import CFG, GENRE_MAP
+from src.config import CFG
 
 
 def seed_everything(seed=42):
@@ -46,7 +46,7 @@ def split_songs(stem_root: Path, seed: int = 42):
 
     for genre_dir in sorted(stem_root.glob("*")):
         genre = genre_dir.name
-        if genre not in GENRE_MAP:
+        if genre not in CFG.GENRE_MAP:
             continue
         songs = sorted(list(genre_dir.iterdir()))
         rng.shuffle(songs)
@@ -157,7 +157,7 @@ class MashupDataset(Dataset):
 
     def __getitem__(self, idx):
         genre = self.epoch_samples[idx]
-        label = GENRE_MAP[genre]
+        label = CFG.GENRE_MAP[genre]
         try:
             mix = self._add_noise(self._mix_stems(genre))
             mel = to_log_mel(mix)

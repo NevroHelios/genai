@@ -6,15 +6,15 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import wandb
+import librosa
 import kagglehub
 from torch.utils.data import DataLoader
 from torchmetrics.classification import MulticlassF1Score
 from tqdm.auto import tqdm
 
-from src.config import CFG, IDX2GENRE
+from src.config import CFG
 from src.dataset import load_audio, to_log_mel
-from models.effnet import GenreClassifier
-
+from src.models.effnet import GenreClassifier
 
 
 def evaluate_local(model, dataset, device):
@@ -33,8 +33,8 @@ def evaluate_local(model, dataset, device):
     print("\n  Per-class F1:")
     per_class_dict = {}
     for i, s in enumerate(per_class_scores):
-        print(f"    {IDX2GENRE[i]:12s}: {s:.4f} {'█' * int(s * 30)}")
-        per_class_dict[f"test_f1_{IDX2GENRE[i]}"] = s.item()
+        print(f"    {CFG.IDX2GENRE[i]:12s}: {s:.4f} {'█' * int(s * 30)}")
+        per_class_dict[f"test_f1_{CFG.IDX2GENRE[i]}"] = s.item()
 
     wandb.log({"test_f1_macro": macro_f1, **per_class_dict})
     return macro_f1
@@ -73,7 +73,7 @@ def predict_test(model, device, n_crops=7):
             ),
         ):
             logits = model(t)
-        return IDX2GENRE[logits.float().mean(0).argmax().item()]
+        return CFG.IDX2GENRE[logits.float().mean(0).argmax().item()]
 
     test_df = pd.read_csv(CFG.TEST_CSV)
     model.eval()
@@ -123,3 +123,29 @@ def upload_to_kagglehub(ckpt_path: Path, best_score: float):
     except Exception as e:
         print(f"[ERROR] Upload failed: {e}")
         raise
+
+
+def predict(model, y, n_crops=7, device="cpu"):
+    # y   = librosa.load(str(path), sr=CFG.SR, mono=True)[0]
+    mel = to_log_mel(y)
+    T = mel.shape[-1]
+
+    starts = np.linspace(0, max(T - CFG.CROP_FRAMES, 0), n_crops).astype(int)
+    crops = np.stack(
+        [
+            mel[:, s : s + CFG.CROP_FRAMES]
+            if T >= CFG.CROP_FRAMES
+            else np.pad(mel, ((0, 0), (0, CFG.CROP_FRAMES - T)))
+            for s in starts
+        ]
+    )
+    for i, _ in enumerate(crops):
+        crops[i] = (crops[i] - crops[i].mean()) / max(crops[i].std(), 1e-6)
+
+    t = torch.from_numpy(crops).float().unsqueeze(1).expand(-1, 3, -1, -1).to(device)
+    with torch.no_grad():
+        logits = model(t).float()  # (n_crops, 10)
+
+    probs = logits.softmax(-1).mean(0)  # average over crops
+    top = probs.argmax().item()
+    return CFG.IDX2GENRE[top], probs.cpu().numpy()

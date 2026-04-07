@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 from src.config import CFG
 from src.dataset import MashupDataset, seed_everything, split_songs
 from models.effnet import GenreClassifier
-from utils import evaluate_local, upload_to_kagglehub
+from src.utils import evaluate_local, upload_to_kagglehub
 
 warnings.filterwarnings("ignore")
 torch.set_float32_matmul_precision("medium")

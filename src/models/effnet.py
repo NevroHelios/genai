@@ -23,8 +23,8 @@ class GenreClassifier(pl.LightningModule):
         self.freq_mask = torchaudio.transforms.FrequencyMasking(freq_mask_param=20)
         self.time_mask = torchaudio.transforms.TimeMasking(time_mask_param=60)
 
-        backbone = models.efficientnet_v2_s(
-            weights=models.EfficientNet_V2_S_Weights.DEFAULT
+        backbone = models.efficientnet_b2(
+            weights=models.EfficientNet_B2_Weights.DEFAULT
         )
         in_features = backbone.classifier[1].in_features
         backbone.classifier = nn.Identity()
