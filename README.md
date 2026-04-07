@@ -1,17 +1,19 @@
+
 # dlgenai — Audio Genre Classifier
 
-EfficientNet-V2-S trained on mel-spectrograms to classify 10 music genres, using PyTorch Lightning and wandb.
+EfficientNet-V7 trained on log-mel spectrograms to classify 10 music genres under distribution shift (clean stems → noisy mashups). Built with PyTorch Lightning and W&B.
+
+**Kaggle private LB: 0.93030**
 
 ## Setup
 
 **Requirements:** Python 3.13, [uv](https://docs.astral.sh/uv/)
 
 ```bash
-# Create venv and install dependencies
 uv sync
 ```
 
-> Without uv, use standard venv:
+> Without uv:
 > ```bash
 > python3.13 -m venv .venv
 > source .venv/bin/activate
@@ -21,22 +23,19 @@ uv sync
 ## Data
 
 Place the competition data under `messy_mashup/`:
+
 ```
 messy_mashup/
-├── genres_stems/     # per-genre stem audio files (training)
-├── mashups/          # mixed audio files (test)
+├── genres_stems/         # per-genre stem audio files (training)
+├── mashups/              # mixed audio files (test)
 ├── test.csv
-└── ESC-50-master/audio/  # background noise augmentation
+└── ESC-50-master/audio/  # background noise for augmentation
 ```
 
 ## Train
 
 ```bash
-# Log in to wandb (first time only)
-wandb login
-
-python train.py
-# or 
+wandb login   # first time only
 uv run train.py
 ```
 
@@ -44,4 +43,5 @@ Checkpoints are saved locally by Lightning. The best checkpoint is also uploaded
 
 ## Config
 
-All hyperparameters are in `config.py` (`CFG` class): batch size, learning rate, mel-spectrogram settings, epochs, etc.
+All hyperparameters live in `config.py` (`CFG` class). See `report.pdf` for architecture details, augmentation design, and full results.
+
