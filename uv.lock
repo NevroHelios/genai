@@ -517,6 +517,7 @@ name = "dlgenai"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "ffmpeg" },
     { name = "ipykernel" },
     { name = "kagglehub" },
     { name = "librosa" },
@@ -534,6 +535,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "ffmpeg", specifier = ">=1.4" },
     { name = "ipykernel", specifier = ">=7.2.0" },
     { name = "kagglehub", specifier = ">=1.0.0" },
     { name = "librosa", specifier = ">=0.11.0" },
@@ -557,6 +559,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/cc/28/c14e053b6762b1044
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c1/ea/53f2148663b321f21b5a606bd5f191517cf40b7072c0497d3c92c4a13b1e/executing-2.2.1-py2.py3-none-any.whl", hash = "sha256:760643d3452b4d777d295bb167ccc74c64a81df23fb5e08eff250c425a4b2017", size = 28317, upload-time = "2025-09-01T09:48:08.5Z" },
 ]
+
+[[package]]
+name = "ffmpeg"
+version = "1.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f0/cc/3b7408b8ecf7c1d20ad480c3eaed7619857bf1054b690226e906fdf14258/ffmpeg-1.4.tar.gz", hash = "sha256:6931692c890ff21d39938433c2189747815dca0c60ddc7f9bb97f199dba0b5b9", size = 5055, upload-time = "2018-10-08T07:50:05.748Z" }
 
 [[package]]
 name = "filelock"
