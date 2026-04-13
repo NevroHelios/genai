@@ -6,10 +6,8 @@ import requests
 import torch
 import io
 import pandas as pd
-import yt_dlp
 from typing import Dict
 import uuid
-from pytubefix import YouTube
 import tempfile
 
 from src.models.effnet import GenreClassifier
